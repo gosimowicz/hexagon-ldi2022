@@ -1,7 +1,7 @@
+import _ from 'lodash';
 import { ROLE_TYPE } from './../models/Role';
 import { Service } from 'typedi';
 import { BaseUser, User } from '../models/User';
-import { chunk } from '../utils/arrays';
 import { BaseRepository } from './BaseRepository';
 
 type TableStructure = {
@@ -26,7 +26,7 @@ export class UserRepository extends BaseRepository {
 
     async createUsers(allUsers: ReadonlyArray<User>) {
         await this.withTransaction(async (trx) => {
-            const chunks = chunk(allUsers, 1000);
+            const chunks = _.chunk(allUsers, 1000);
 
             for await (const users of chunks) {
                 await trx.insert(users.map(this.parseUserToTable)).into(UserRepository.TABLE_NAME);

@@ -7,6 +7,7 @@ export class BaseProduct {
         public readonly createdById: string | null,
         public readonly updatedById: string | null,
         public readonly categoryId: string,
+        public readonly price: number,
         public readonly createdAt: Date,
         public readonly updatedAt: Date,
         public readonly deleted = false
@@ -21,6 +22,7 @@ export class Product extends BaseProduct {
         public readonly createdBy: BaseUser,
         public readonly updatedBy: BaseUser,
         public readonly category: BaseCategory,
+        price: number,
         createdAt: Date,
         updatedAt: Date,
         deleted = false
@@ -31,6 +33,7 @@ export class Product extends BaseProduct {
             createdBy ? createdBy.id : null,
             updatedBy ? updatedBy.id : null,
             category.id,
+            price,
             createdAt,
             updatedAt,
             deleted

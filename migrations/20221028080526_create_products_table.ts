@@ -23,7 +23,7 @@ const up = async (knex: Knex): Promise<void> => {
 
 const down = async (knex: Knex): Promise<void> => {
     await knex.schema.withSchema('public')
-        .alterTable('users_roles', (table) => {
+        .alterTable('products', (table) => {
             table.dropForeign('created_by_id');
             table.dropForeign('updated_by_id');
             table.dropForeign('category_id');

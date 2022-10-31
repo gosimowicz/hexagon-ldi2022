@@ -6,7 +6,9 @@
   "scripts": {
     "start": "npx nodemon src/index.ts",
     "lint": "npx eslint src/** migrations/**",
-    "lint:fix": "npx eslint src/** migrations/** --fix"
+    "lint:fix": "npx eslint src/** migrations/** --fix",
+    "migrate:latest": "npx knex migrate:latest",
+    "migrate:rollback": "npx knex migrate:rollback"
   },
   "author": "",
   "license": "ISC",

@@ -1,3 +1,6 @@
+import { OrderRepository } from './../repository/OrderRepository';
+import { BaseOrder, Order, PaymentBase } from './../models/Order';
+import _ from 'lodash';
 import { BaseProduct, Product } from './../models/Product';
 import { CategoryRepository } from './../repository/CategoryRepository';
 import { RoleRepository } from './../repository/RoleRepository';
@@ -10,19 +13,25 @@ import { Role, ROLE_TYPE } from '../models/Role';
 import { Category } from '../models/Category';
 import loops from '../utils/loops';
 import { ProductRepository } from '../repository/ProductRepository';
+import { OrderedProductBase } from '../models/Order';
 
-class GenerateUsersDTO {
-    public count!: number;
-    public roles!: ROLE_TYPE[];
+type GenerateUsersDTO = {
+    count: number;
+    roles: ROLE_TYPE[];
 }
 
-class GenerateCategoriesDTO {
-    public count!: number;
-    public depth!: number;
+type GenerateCategoriesDTO = {
+    count: number;
+    depth: number;
 }
 
-class GenerateProductsDTO {
-    public productsPerUser!: number;
+type GenerateProductsDTO = {
+    productsPerUser: number;
+}
+
+type GenerateOrdersDTO = {
+    maxNumberOfProducts: number;
+    maxNumberOfOrders: number;
 }
 
 @JsonController('/fake')
@@ -31,12 +40,14 @@ export class FakeController {
     private readonly roleRepository: RoleRepository;
     private readonly categoryRepository: CategoryRepository;
     private readonly productRepository: ProductRepository;
+    private readonly orderRepository: OrderRepository;
 
     constructor() {
         this.userRepository = Container.get(UserRepository);
         this.roleRepository = Container.get(RoleRepository);
         this.categoryRepository = Container.get(CategoryRepository);
         this.productRepository = Container.get(ProductRepository);
+        this.orderRepository = Container.get(OrderRepository);
     }
 
     @Post('/user')
@@ -84,6 +95,7 @@ export class FakeController {
                 user,
                 user,
                 categories[Math.floor(Math.random() * categories.length)],
+                parseFloat(_.random(0, 1000, true).toFixed(2)),
                 faker.date.past(10),
                 faker.date.past(9)
             ))
@@ -92,6 +104,49 @@ export class FakeController {
         await this.productRepository.createProducts(products);
 
         return { added: users.length * params.productsPerUser };
+    }
+
+    @Post('/order')
+    public async generateOrders(@Body() params: GenerateOrdersDTO) {
+        let addedProducts = 0;
+        const orders: Order[] = [];
+        const [products, users] = await Promise.all([
+            this.productRepository.getAllProducts(),
+            this.userRepository.getUsersByRoles([ROLE_TYPE.USER])
+        ]);
+
+        users.forEach((user) => {
+            const numberOfOrders = _.random(1, params.maxNumberOfOrders);
+
+            loops.mapN(numberOfOrders, () => {
+                const orderId = faker.datatype.uuid();
+                const orderCreationDate = faker.date.past(9);
+                const numberOfProducts = _.random(1, params.maxNumberOfProducts);
+                const startIndexOfProducts = _.random(0, products.length - numberOfProducts);
+                const orderedProducts = products.slice(startIndexOfProducts, startIndexOfProducts + numberOfProducts).map((p => new OrderedProductBase(
+                    p.id,
+                    orderId,
+                    Math.random() > 0.5 ? p.price : parseFloat(_.random(0.01, p.price, true).toFixed(2)),
+                    _.random(0, 10),
+                    orderCreationDate,
+                    orderCreationDate
+                )));
+                addedProducts += orderedProducts.length;
+
+                const payment = Math.random() > 0.5 ? null : new PaymentBase(
+                    faker.datatype.uuid(),
+                    orderId,
+                    'payed',
+                    faker.date.soon(1, orderCreationDate),
+                    faker.date.soon(1, orderCreationDate)
+                );
+                orders.push(new Order(orderId, user, orderCreationDate, orderCreationDate, orderedProducts, payment));
+            });
+        });
+
+        await this.orderRepository.createOrders(orders);
+
+        return { addedProducts, addedOrderes: orders.length };
     }
 
     private generateUser(roles: ReadonlyArray<Role>) {
