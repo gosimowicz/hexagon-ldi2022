@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { Service, Container } from 'typedi';
+import { Service } from 'typedi';
 import { BaseCategory, Category } from '../models/Category';
 import { BaseRepository } from './BaseRepository';
 

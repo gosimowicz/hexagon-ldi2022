@@ -1,8 +1,19 @@
-import { Knex } from 'knex';
-import { Service, Container } from 'typedi';
-import { User } from '../models/User';
+import { ROLE_TYPE } from './../models/Role';
+import { Service } from 'typedi';
+import { BaseUser, User } from '../models/User';
 import { chunk } from '../utils/arrays';
 import { BaseRepository } from './BaseRepository';
+
+type TableStructure = {
+    id: string,
+    created_at: Date,
+    updated_at: Date,
+    username: string,
+    firsname: string,
+    lastname: string,
+    email: string,
+    deleted: boolean,
+}
 
 @Service()
 export class UserRepository extends BaseRepository {
@@ -28,6 +39,47 @@ export class UserRepository extends BaseRepository {
                 }, [] as Array<{user_id: string, role_id: string}>)).into(UserRepository.USERS_ROLE_TABLE_NAME);
             }
         });
+    }
+
+    async getUsersByRoles(roles: ReadonlyArray<ROLE_TYPE>): Promise<BaseUser[]> {
+        const users = await this.db
+            .select<TableStructure[]>('u.*')
+            .from({ u: UserRepository.TABLE_NAME })
+            .where('deleted', false)
+            .innerJoin(`${UserRepository.USERS_ROLE_TABLE_NAME} as ur`, 'u.id', '=', 'ur.user_id')
+            .innerJoin('roles as r', 'r.id', '=', 'ur.role_id')
+            .whereIn('r.name', roles)
+            ;
+
+        return users.map(this.parseTableToUser);
+    }
+
+    async getRandomUser(deleted = false): Promise<BaseUser> {
+        const userEntry = await this.db
+            .select<TableStructure>()
+            .from(UserRepository.TABLE_NAME)
+            .where('deleted', deleted)
+            .orderByRaw('RAAND()')
+            .first();
+
+        if (!userEntry) {
+            throw new Error('Can\'t get random user');
+        }
+
+        return this.parseTableToUser(userEntry);
+    }
+
+    private parseTableToUser(userEntry: TableStructure): BaseUser {
+        return new BaseUser(
+            userEntry.id,
+            userEntry.username,
+            userEntry.firsname,
+            userEntry.lastname,
+            userEntry.email,
+            userEntry.created_at,
+            userEntry.updated_at,
+            userEntry.deleted
+        );
     }
 
     private parseUserToTable(user: User) {

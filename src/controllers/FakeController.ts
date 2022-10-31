@@ -1,3 +1,4 @@
+import { BaseProduct, Product } from './../models/Product';
 import { CategoryRepository } from './../repository/CategoryRepository';
 import { RoleRepository } from './../repository/RoleRepository';
 import { faker } from '@faker-js/faker';
@@ -8,6 +9,7 @@ import { User } from '../models/User';
 import { Role, ROLE_TYPE } from '../models/Role';
 import { Category } from '../models/Category';
 import loops from '../utils/loops';
+import { ProductRepository } from '../repository/ProductRepository';
 
 class GenerateUsersDTO {
     public count!: number;
@@ -19,16 +21,22 @@ class GenerateCategoriesDTO {
     public depth!: number;
 }
 
+class GenerateProductsDTO {
+    public productsPerUser!: number;
+}
+
 @JsonController('/fake')
 export class FakeController {
     private readonly userRepository: UserRepository;
     private readonly roleRepository: RoleRepository;
-    categoryRepository: CategoryRepository;
+    private readonly categoryRepository: CategoryRepository;
+    private readonly productRepository: ProductRepository;
 
     constructor() {
         this.userRepository = Container.get(UserRepository);
         this.roleRepository = Container.get(RoleRepository);
         this.categoryRepository = Container.get(CategoryRepository);
+        this.productRepository = Container.get(ProductRepository);
     }
 
     @Post('/user')
@@ -59,6 +67,31 @@ export class FakeController {
         await this.userRepository.deleteUsers();
 
         return null;
+    }
+
+    @Post('/product')
+    public async generateProducts(@Body() params: GenerateProductsDTO) {
+        const [users, categories] = await Promise.all([
+            this.userRepository.getUsersByRoles([ROLE_TYPE.ADMIN]),
+            this.categoryRepository.getCategories()
+        ]);
+
+        const products: BaseProduct[] = [];
+        users.forEach((user) => loops.mapN(params.productsPerUser, () =>
+            products.push(new Product(
+                faker.datatype.uuid(),
+                faker.random.word(),
+                user,
+                user,
+                categories[Math.floor(Math.random() * categories.length)],
+                faker.date.past(10),
+                faker.date.past(9)
+            ))
+        ));
+
+        await this.productRepository.createProducts(products);
+
+        return { added: users.length * params.productsPerUser };
     }
 
     private generateUser(roles: ReadonlyArray<Role>) {
