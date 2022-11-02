@@ -30,7 +30,7 @@ export class CategoryRepository extends BaseRepository {
     }
 
     async getCategories(): Promise<Array<BaseCategory>> {
-        const response = await this.db.select().from(CategoryRepository.TABLE_NAME).where('deleted', false);
+        const response = await this.db.select().from(CategoryRepository.TABLE_NAME).where('deleted', false).orderBy('parent_id', 'desc');
 
         return response.map(this.mapTableToCategory);
     }
