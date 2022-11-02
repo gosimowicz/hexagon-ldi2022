@@ -35,8 +35,10 @@ export class OrderRepository extends BaseRepository {
     private static readonly PAYMENTS_TABLE_NAME = 'payments';
 
     public async createOrders(allOrders: Order[]) {
+        let savedChunks = 0;
         await this.withTransaction(async (trx) => {
             const chunks = _.chunk(allOrders, 1000);
+            console.log(`saving orders, chunks: ${chunks.length}`);
 
             for await (const chunk of chunks) {
                 await trx.insert(chunk.map(this.parseOrderToTable)).into(OrderRepository.TABLE_NAME);
@@ -49,8 +51,30 @@ export class OrderRepository extends BaseRepository {
                         await trx.insert(this.parsePaymentToTable(order.payment)).into(OrderRepository.PAYMENTS_TABLE_NAME);
                     }
                 }
+                console.log(`Saved chunk: ${savedChunks++}`);
             }
         });
+        console.log('Orders saved');
+    }
+
+    public async getMostPopularProducts(categoryIds: string[], limit?: number) {
+        // DO NOT CHANGE
+        const query = this.db
+            .select('o.product_id as productId')
+            .sum('o.amount as amount')
+            .from(`${ OrderRepository.ORDERED_PRODUCTS_TABLE_NAME } AS o`)
+            .groupBy('o.product_id')
+            .orderByRaw('SUM(o.amount) DESC')
+            .join('products as p', 'p.id', 'o.product_id')
+            .whereIn('p.category_id', categoryIds);
+
+        if (limit) {
+            query.limit(limit);
+        }
+
+        const result = await query;
+
+        return await new Promise((resolve) => setTimeout(() => resolve(result), 1000));
     }
 
     private parseOrderToTable(order: BaseOrder): OrderTableStructure {

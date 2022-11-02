@@ -11,7 +11,12 @@ export class CategoryController {
     }
 
     @Get('/tree')
-    public getCategories() {
+    public getCategoriesTree() {
         return this.categoryService.getCategoriesTree();
+    }
+
+    @Get('/')
+    public getAllCategories() {
+        return this.categoryService.getCategories();
     }
 }

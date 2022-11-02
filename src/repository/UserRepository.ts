@@ -41,8 +41,8 @@ export class UserRepository extends BaseRepository {
         });
     }
 
-    async getUsersByRoles(roles: ReadonlyArray<ROLE_TYPE>): Promise<BaseUser[]> {
-        const users = await this.db
+    async getUsersByRoles(roles: ReadonlyArray<ROLE_TYPE>, limit?: number): Promise<BaseUser[]> {
+        const query = this.db
             .select<TableStructure[]>('u.*')
             .from({ u: UserRepository.TABLE_NAME })
             .where('deleted', false)
@@ -51,7 +51,12 @@ export class UserRepository extends BaseRepository {
             .whereIn('r.name', roles)
             ;
 
-        return users.map(this.parseTableToUser);
+        if (limit) {
+            query.limit(limit);
+        }
+
+
+        return (await query).map(this.parseTableToUser);
     }
 
     async getRandomUser(deleted = false): Promise<BaseUser> {
@@ -59,7 +64,8 @@ export class UserRepository extends BaseRepository {
             .select<TableStructure>()
             .from(UserRepository.TABLE_NAME)
             .where('deleted', deleted)
-            .orderByRaw('RAAND()')
+            .orderByRaw('RANDOM()')
+            .limit(1)
             .first();
 
         if (!userEntry) {

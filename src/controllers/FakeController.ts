@@ -32,6 +32,7 @@ type GenerateProductsDTO = {
 type GenerateOrdersDTO = {
     maxNumberOfProducts: number;
     maxNumberOfOrders: number;
+    numberOfUsers: number;
 }
 
 @JsonController('/fake')
@@ -112,7 +113,7 @@ export class FakeController {
         const orders: Order[] = [];
         const [products, users] = await Promise.all([
             this.productRepository.getAllProducts(),
-            this.userRepository.getUsersByRoles([ROLE_TYPE.USER])
+            this.userRepository.getUsersByRoles([ROLE_TYPE.USER], params.numberOfUsers)
         ]);
 
         users.forEach((user) => {

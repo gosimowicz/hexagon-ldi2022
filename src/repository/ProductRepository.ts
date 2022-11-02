@@ -26,6 +26,15 @@ export class ProductRepository extends BaseRepository {
         return tableEntries.map(this.parseTableToProduct);
     }
 
+    public async getProductsByCategoryIds(categoryIds: string[]) {
+        const tableEntries = await this.db
+            .select<TableStructure[]>()
+            .from(ProductRepository.TABLE_NAME)
+            .whereIn('category_id', categoryIds);
+
+        return tableEntries.map(this.parseTableToProduct);
+    }
+
     public async createProducts(allProducts: ReadonlyArray<BaseProduct>) {
         await this.withTransaction(async (trx) => {
             const chunks = _.chunk(allProducts, 1000);
