@@ -1,4 +1,3 @@
-import { faker } from '@faker-js/faker';
 import _ from 'lodash';
 import { CategoryRepository } from './../repository/CategoryRepository';
 import Container, { Service } from 'typedi';
@@ -17,9 +16,6 @@ export class CategoryService {
     }
 
     async getCategoriesWithChildrens(categoryIds: ReadonlyArray<string>): Promise<BaseCategory[]> {
-        // console.log('categoryService.getCategoriesWithChildrens');
-        const uuid = faker.datatype.uuid();
-        // console.time(`getCategoriesWithChildrens - ${uuid}`);
         const categories = await this.getCategories();
 
         const categoriesById = _.keyBy(categories, cat => cat.id);

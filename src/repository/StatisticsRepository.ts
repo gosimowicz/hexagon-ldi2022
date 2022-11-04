@@ -3,8 +3,7 @@ import { BaseRepository } from './BaseRepository';
 
 @Service()
 export class StatisticsRepository extends BaseRepository {
-    async getPricesStatistics(categoryIds: string[]) {
-        // console.log('StatisticsRepository.getPricesStatistics');
+    async getPricesStatistics(categoryIds: ReadonlyArray<string>) {
         const result = await this.db
             .select<{ avgPrice: number, minPrice: number, maxPrice: number, categoryIds: string}[]>('product_id as productId')
             .avg('o.price as avgPrice')

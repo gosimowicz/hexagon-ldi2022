@@ -13,9 +13,9 @@ export class StatisticsService {
     }
 
     async getPricesStatistics(categoryIds: ReadonlyArray<string>) {
-        const categories = await this.categoryService.getCategoriesWithChildrens(categoryIds);
+        // const categories = await this.categoryService.getCategoriesWithChildrens(categoryIds);
 
-        const response = this.statisticsRepository.getPricesStatistics(categories.map(c => c.id));
+        const response = this.statisticsRepository.getPricesStatistics(categoryIds);
 
         return response;
     }

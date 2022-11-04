@@ -16,9 +16,9 @@ export class OrderService {
         categoryIds: ReadonlyArray<string>,
         count?: number
     ) {
-        const categories = await this.categoryService.getCategoriesWithChildrens(categoryIds);
+        // const categories = await this.categoryService.getCategoriesWithChildrens(categoryIds);
 
-        const response = this.orderRepository.getMostPopularProducts(categories.map(c => c.id), count);
+        const response = this.orderRepository.getMostPopularProducts(categoryIds, count);
 
         return response;
     }

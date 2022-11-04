@@ -57,7 +57,7 @@ export class OrderRepository extends BaseRepository {
         console.log('Orders saved');
     }
 
-    public async getMostPopularProducts(categoryIds: string[], limit?: number) {
+    public async getMostPopularProducts(categoryIds: ReadonlyArray<string>, limit?: number) {
         // console.log('OrderRepository.getMostPopularProducts');
         const query = this.db
             .select('o.product_id as productId')
